@@ -84,20 +84,70 @@ public class Rope : MonoBehaviour
     }
 
 
+    //private void ResolveCollisions()
+    //{
+    //    for (int i = 1; i < segmentCount - 1; i++)
+    //    {
+    //        RopeSegment seg = ropeSegments[i];
+
+    //        Collider[] hits = Physics.OverlapSphere(
+    //            seg.currentPosition,
+    //            collisionRadius,
+    //            collisionMask
+    //        );
+
+    //        foreach (Collider hit in hits)
+    //        {
+    //            if (hit is SphereCollider sphere)
+    //            {
+    //                Vector3 center = sphere.transform.TransformPoint(sphere.center);
+    //                float radius = sphere.radius * sphere.transform.lossyScale.x;
+
+    //                Vector3 dir = seg.currentPosition - center;
+    //                float dist = dir.magnitude;
+
+    //                if (dist < radius + collisionRadius)
+    //                {
+    //                    seg.currentPosition = center + dir.normalized * (radius + collisionRadius);
+    //                }
+    //            }
+    //            else
+    //            {
+    //                Vector3 closest = hit.ClosestPoint(seg.currentPosition);
+    //                Vector3 dir = seg.currentPosition - closest;
+
+    //                float dist = dir.magnitude;
+    //                if (dist < collisionRadius)
+    //                {
+    //                    seg.currentPosition = closest + dir.normalized * collisionRadius;
+    //                }
+    //            }
+    //        }
+
+    //        ropeSegments[i] = seg;
+    //    }
+    //}
+
+    // Create once (class-level)
+    private Collider[] collisionHits = new Collider[16];
+
     private void ResolveCollisions()
     {
         for (int i = 1; i < segmentCount - 1; i++)
         {
             RopeSegment seg = ropeSegments[i];
 
-            Collider[] hits = Physics.OverlapSphere(
+            int hitCount = Physics.OverlapSphereNonAlloc(
                 seg.currentPosition,
                 collisionRadius,
+                collisionHits,
                 collisionMask
             );
 
-            foreach (Collider hit in hits)
+            for (int h = 0; h < hitCount; h++)
             {
+                Collider hit = collisionHits[h];
+
                 if (hit is SphereCollider sphere)
                 {
                     Vector3 center = sphere.transform.TransformPoint(sphere.center);
@@ -106,7 +156,7 @@ public class Rope : MonoBehaviour
                     Vector3 dir = seg.currentPosition - center;
                     float dist = dir.magnitude;
 
-                    if (dist < radius + collisionRadius)
+                    if (dist < radius + collisionRadius && dist > 0f)
                     {
                         seg.currentPosition = center + dir.normalized * (radius + collisionRadius);
                     }
@@ -117,7 +167,7 @@ public class Rope : MonoBehaviour
                     Vector3 dir = seg.currentPosition - closest;
 
                     float dist = dir.magnitude;
-                    if (dist < collisionRadius)
+                    if (dist < collisionRadius && dist > 0f)
                     {
                         seg.currentPosition = closest + dir.normalized * collisionRadius;
                     }
@@ -127,8 +177,6 @@ public class Rope : MonoBehaviour
             ropeSegments[i] = seg;
         }
     }
-
-
 
     private void Simulate()
     {
