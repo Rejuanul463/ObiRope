@@ -34,8 +34,6 @@ public class ConnectionManager : MonoBehaviour
         graph[a].Add(b);
         graph[b].Add(a);
 
-        // Debug.Log($"[Connect] Connected {a.name} <-> {b.name}");
-
         UpdateElectricityFullComponent(a);
         UpdateElectricityFullComponent(b);
     }
@@ -79,7 +77,6 @@ public class ConnectionManager : MonoBehaviour
                 if (!pole.isConnected)
                 {
                     pole.isConnected = true;
-                    Debug.Log($"[Electricity] {pole.name} is now connected");
                 }
             }
         }
