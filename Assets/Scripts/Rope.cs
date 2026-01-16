@@ -16,6 +16,7 @@ public class Rope : MonoBehaviour
         }
     }
 
+    [SerializeField] private Transform emptyGameObject;
     [SerializeField] private bool isSimulating = true;
 
     [Header("Endpoints")]
@@ -31,11 +32,11 @@ public class Rope : MonoBehaviour
     [Header("Collision")]
     [SerializeField] private float collisionRadius = 0.1f;
     [SerializeField] private LayerMask collisionMask;
-    [SerializeField] private int collisionIterations = 2;
-
 
     private LineRenderer lineRenderer;
     private List<RopeSegment> ropeSegments = new List<RopeSegment>();
+
+    private Collider[] collisionHits = new Collider[16];
 
     private void Start()
     {
@@ -48,32 +49,32 @@ public class Rope : MonoBehaviour
 
     IEnumerator StopSimulation()
     {
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(3f);
         isSimulating = false;
     }
-
     public void Innitialize(float distance, Vector3 stp, Vector3 ep)
     {
-        segmentCount = (int)(distance / ropeSegmentLength) + 1;
+        ropeSegments.Clear();
 
         startPoint = stp;
         endPoint = ep;
 
-
-        Vector3 startPos = startPoint;
-        Vector3 endPos = endPoint;
+        segmentCount = (int)(distance / ropeSegmentLength) + 1;
 
         for (int i = 0; i < segmentCount; i++)
         {
             float t = i / (float)(segmentCount - 1);
-            Vector3 pos = Vector3.Lerp(startPos, endPos, t);
+            Vector3 pos = Vector3.Lerp(startPoint, endPoint, t);
             ropeSegments.Add(new RopeSegment(pos));
         }
+
+        if (emptyGameObject != null)
+            emptyGameObject.position = startPoint;
     }
 
     private void FixedUpdate()
     {
-        if(isSimulating)
+        if (isSimulating)
             Simulate();
     }
 
@@ -82,139 +83,46 @@ public class Rope : MonoBehaviour
         if(isSimulating)
             DrawRope();
     }
-
-
-    //private void ResolveCollisions()
-    //{
-    //    for (int i = 1; i < segmentCount - 1; i++)
-    //    {
-    //        RopeSegment seg = ropeSegments[i];
-
-    //        Collider[] hits = Physics.OverlapSphere(
-    //            seg.currentPosition,
-    //            collisionRadius,
-    //            collisionMask
-    //        );
-
-    //        foreach (Collider hit in hits)
-    //        {
-    //            if (hit is SphereCollider sphere)
-    //            {
-    //                Vector3 center = sphere.transform.TransformPoint(sphere.center);
-    //                float radius = sphere.radius * sphere.transform.lossyScale.x;
-
-    //                Vector3 dir = seg.currentPosition - center;
-    //                float dist = dir.magnitude;
-
-    //                if (dist < radius + collisionRadius)
-    //                {
-    //                    seg.currentPosition = center + dir.normalized * (radius + collisionRadius);
-    //                }
-    //            }
-    //            else
-    //            {
-    //                Vector3 closest = hit.ClosestPoint(seg.currentPosition);
-    //                Vector3 dir = seg.currentPosition - closest;
-
-    //                float dist = dir.magnitude;
-    //                if (dist < collisionRadius)
-    //                {
-    //                    seg.currentPosition = closest + dir.normalized * collisionRadius;
-    //                }
-    //            }
-    //        }
-
-    //        ropeSegments[i] = seg;
-    //    }
-    //}
-
-    // Create once (class-level)
-    private Collider[] collisionHits = new Collider[16];
-
-    private void ResolveCollisions()
-    {
-        for (int i = 1; i < segmentCount - 1; i++)
-        {
-            RopeSegment seg = ropeSegments[i];
-
-            int hitCount = Physics.OverlapSphereNonAlloc(
-                seg.currentPosition,
-                collisionRadius,
-                collisionHits,
-                collisionMask
-            );
-
-            for (int h = 0; h < hitCount; h++)
-            {
-                Collider hit = collisionHits[h];
-
-                if (hit is SphereCollider sphere)
-                {
-                    Vector3 center = sphere.transform.TransformPoint(sphere.center);
-                    float radius = sphere.radius * sphere.transform.lossyScale.x;
-
-                    Vector3 dir = seg.currentPosition - center;
-                    float dist = dir.magnitude;
-
-                    if (dist < radius + collisionRadius && dist > 0f)
-                    {
-                        seg.currentPosition = center + dir.normalized * (radius + collisionRadius);
-                    }
-                }
-                else
-                {
-                    Vector3 closest = hit.ClosestPoint(seg.currentPosition);
-                    Vector3 dir = seg.currentPosition - closest;
-
-                    float dist = dir.magnitude;
-                    if (dist < collisionRadius && dist > 0f)
-                    {
-                        seg.currentPosition = closest + dir.normalized * collisionRadius;
-                    }
-                }
-            }
-
-            ropeSegments[i] = seg;
-        }
-    }
-
     private void Simulate()
     {
         Vector3 gravity = Physics.gravity;
         float dt = Time.fixedDeltaTime;
-
-        float velocityScale = 0.85f;
-        float maxDisplacement = ropeSegmentLength * 0.5f;
 
         for (int i = 1; i < segmentCount - 1; i++)
         {
             RopeSegment seg = ropeSegments[i];
 
             Vector3 velocity = seg.currentPosition - seg.previousPosition;
-
-            velocity = Vector3.ClampMagnitude(velocity * velocityScale, maxDisplacement);
-
             seg.previousPosition = seg.currentPosition;
+
             seg.currentPosition += velocity;
             seg.currentPosition += gravity * dt * dt;
 
             ropeSegments[i] = seg;
         }
+
         ResolveCollisions();
+
         for (int i = 0; i < constraintIterations; i++)
             ApplyConstraints();
     }
-
     private void ApplyConstraints()
     {
-        // start
+        // Move endpoint FIRST
+        emptyGameObject.position = Vector3.MoveTowards(
+            emptyGameObject.position,
+            endPoint,
+            1f * Time.fixedDeltaTime
+        );
+
+        // Lock start
         RopeSegment startSeg = ropeSegments[0];
         startSeg.currentPosition = startPoint;
         ropeSegments[0] = startSeg;
 
-        // end
+        // Lock end
         RopeSegment endSeg = ropeSegments[segmentCount - 1];
-        endSeg.currentPosition = endPoint;
+        endSeg.currentPosition = emptyGameObject.position;
         ropeSegments[segmentCount - 1] = endSeg;
 
         // Length constraints
@@ -246,9 +154,39 @@ public class Rope : MonoBehaviour
             ropeSegments[i + 1] = b;
         }
     }
+    private void ResolveCollisions()
+    {
+        for (int i = 1; i < segmentCount - 1; i++)
+        {
+            RopeSegment seg = ropeSegments[i];
 
+            int hitCount = Physics.OverlapSphereNonAlloc(
+                seg.currentPosition,
+                collisionRadius,
+                collisionHits,
+                collisionMask
+            );
+
+            for (int h = 0; h < hitCount; h++)
+            {
+                Collider hit = collisionHits[h];
+                Vector3 closest = hit.ClosestPoint(seg.currentPosition);
+                Vector3 dir = seg.currentPosition - closest;
+
+                float dist = dir.magnitude;
+                if (dist > 0f && dist < collisionRadius)
+                {
+                    seg.currentPosition = closest + dir.normalized * collisionRadius;
+                }
+            }
+
+            ropeSegments[i] = seg;
+        }
+    }
     private void DrawRope()
     {
+        if (ropeSegments.Count == 0) return;
+
         lineRenderer.positionCount = segmentCount;
 
         for (int i = 0; i < segmentCount; i++)

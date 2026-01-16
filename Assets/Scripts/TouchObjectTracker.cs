@@ -1,6 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
+
 using UnityEngine;
 
 public class TouchObjectTracker : MonoBehaviour
@@ -32,10 +30,6 @@ public class TouchObjectTracker : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, targetLayer))
         {
             GameObject hitObject = hit.collider.gameObject;
-
-            //if (requireTrigger && !hit.collider.isTrigger)
-            //    return;
-
             if (touch.phase == TouchPhase.Began)
             {
                 lastHitObject = hitObject;
@@ -78,10 +72,7 @@ public class TouchObjectTracker : MonoBehaviour
             startPole.GetComponent<Pole>().isConnected = true;
             endPole.GetComponent<Pole>().isConnected = true;
         }
-
         startPos = endPos;
     }
-
-    
 }
 
