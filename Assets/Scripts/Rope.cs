@@ -16,29 +16,29 @@ public class Rope : MonoBehaviour
         }
     }
 
-    [SerializeField] private Transform emptyGameObject;
-    [SerializeField] private bool isSimulating = true;
+    [SerializeField] Transform emptyGameObject;
+    [SerializeField] bool isSimulating = true;
 
     [Header("Endpoints")]
-    [SerializeField] private Vector3 startPoint;
-    [SerializeField] private Vector3 endPoint;
+    [SerializeField] Vector3 startPoint;
+    [SerializeField] Vector3 endPoint;
 
     [Header("Rope Settings")]
-    [SerializeField] private float ropeSegmentLength = 0.25f;
-    [SerializeField] private int segmentCount = 35;
-    [SerializeField] private float lineWidth = 0.1f;
-    [SerializeField] private int constraintIterations = 40;
+    [SerializeField] float ropeSegmentLength = 0.25f;
+    [SerializeField] int segmentCount = 35;
+    [SerializeField] float lineWidth = 0.1f;
+    [SerializeField] int constraintIterations = 40;
 
     [Header("Collision")]
-    [SerializeField] private float collisionRadius = 0.1f;
-    [SerializeField] private LayerMask collisionMask;
+    [SerializeField] float collisionRadius = 0.1f;
+    [SerializeField] LayerMask collisionMask;
 
-    private LineRenderer lineRenderer;
-    private List<RopeSegment> ropeSegments = new List<RopeSegment>();
+    LineRenderer lineRenderer;
+    List<RopeSegment> ropeSegments = new List<RopeSegment>();
 
-    private Collider[] collisionHits = new Collider[16];
+    Collider[] collisionHits = new Collider[16];
 
-    private void Start()
+    void Start()
     {
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.startWidth = lineWidth;
@@ -52,6 +52,7 @@ public class Rope : MonoBehaviour
         yield return new WaitForSeconds(3f);
         isSimulating = false;
     }
+    // This will be called whenever player completes Dragging from one pole to another
     public void Innitialize(float distance, Vector3 stp, Vector3 ep)
     {
         ropeSegments.Clear();
@@ -72,13 +73,13 @@ public class Rope : MonoBehaviour
             emptyGameObject.position = startPoint;
     }
 
-    private void FixedUpdate()
+    void FixedUpdate()
     {
         if (isSimulating)
             Simulate();
     }
 
-    private void LateUpdate()
+    void LateUpdate()
     {
         if(isSimulating)
             DrawRope();
@@ -106,7 +107,7 @@ public class Rope : MonoBehaviour
         for (int i = 0; i < constraintIterations; i++)
             ApplyConstraints();
     }
-    private void ApplyConstraints()
+    void ApplyConstraints()
     {
         // Move endpoint FIRST
         emptyGameObject.position = Vector3.MoveTowards(

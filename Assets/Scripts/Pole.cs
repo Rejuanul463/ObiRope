@@ -2,8 +2,9 @@ using UnityEngine;
 
 public class Pole : MonoBehaviour
 {
-    [SerializeField] bool connected;
+    [SerializeField] private bool connected;
     [SerializeField] GameObject Light;
+
     enum PoleType{
         mainPole,
         connectorPole,
@@ -17,16 +18,19 @@ public class Pole : MonoBehaviour
             connected = true;
         else
             connected = false;
+
+        ConnectionManager.Instance.RegisterPole(this);
     }
     public bool isConnected
     {
         get { return connected; }
         set { 
             connected = value;
-            if (connected && poleType == PoleType.homePole)
-            {
-                Light.SetActive(true);
-            }
+            if(Light != null)
+                if (connected && poleType == PoleType.homePole)
+                {
+                    Light.SetActive(true);
+                }
         }
     }
 }
