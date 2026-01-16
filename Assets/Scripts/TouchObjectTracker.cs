@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class TouchObjectTracker : MonoBehaviour
@@ -14,7 +15,7 @@ public class TouchObjectTracker : MonoBehaviour
 
     private Vector3 startPos;
     private Vector3 endPos;
-
+    private GameObject startPole;
     private void Awake()
     {
         cam = Camera.main;
@@ -56,20 +57,27 @@ public class TouchObjectTracker : MonoBehaviour
         }
     }
 
-    private void OnTouchStart(GameObject obj)
+    private void OnTouchStart(GameObject stp)
     {
-        Debug.Log("Touch started on: " + obj.name);
-        startPos = obj.transform.position;
+        startPole = stp;
+        Debug.Log("Touch started on: " + startPole.name);
+        startPos = startPole.transform.position;
     }
 
-    private void OnTouchEnter(GameObject obj)
+    private void OnTouchEnter(GameObject endPole)
     {
-        Debug.Log("Touch moved over: " + obj.name);
-        endPos = obj.transform.position;
+        Debug.Log("Touch moved over: " + endPole.name);
+        endPos = endPole.transform.position;
         float dist = Vector3.Distance(startPos, endPos);
         GameObject rope = Instantiate(ropePrefabe, startPos, Quaternion.identity);
 
         rope.GetComponent<Rope>().Innitialize(dist, startPos, endPos);
+
+        if(startPole.GetComponent<Pole>().isConnected || endPole.GetComponent<Pole>().isConnected)
+        {
+            startPole.GetComponent<Pole>().isConnected = true;
+            endPole.GetComponent<Pole>().isConnected = true;
+        }
 
         startPos = endPos;
     }
