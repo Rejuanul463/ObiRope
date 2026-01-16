@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.unity.collab-proxy": "2.11.2",
+    "com.unity.collab-proxy": "https://github.com/needle-mirror/com.unity.collab-proxy.git",
     "com.unity.device-simulator.devices": "1.0.1",
     "com.unity.feature.development": "1.0.1",
     "com.unity.textmeshpro": "3.0.7",
